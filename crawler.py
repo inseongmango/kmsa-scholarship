@@ -414,6 +414,12 @@ def run(cfg: dict, state: dict, today: dt.date) -> None:
             log.warning("[%s] 실패: %s", name, e)
             continue
 
+        if typ == "kosaf_api":
+            # 공공데이터는 매번 전체 목록을 주므로, 이번에 빠진 항목(필터에 걸렸거나 삭제된 것)은 지운다
+            current = {r["id"] for r in raw}
+            for iid in [k for k, v in items.items() if v.get("source") == name and k not in current]:
+                del items[iid]
+
         kept = 0
         for r in raw:
             if typ != "kosaf_api" and not title_ok(r["title"], src_inc, src_exc):
