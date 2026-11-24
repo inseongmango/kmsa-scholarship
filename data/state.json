@@ -12,14 +12,15 @@
    "org": "재단법인 한독제석재단",
    "apply_start": "2026-11-03",
    "apply_end": "2026-12-14",
-   "target": "의약계열 / 학업성적이 우수하나 경제적으로 어려움을 겪는 학생○ 의대(본과 2학년 진학 예정자) 재학…",
-   "amount": "3년 등록금 전액 의/약대 각 1명○ 1년 등록금 전액 의/약대 1명",
+   "target": "의약계열 / 학업성적이 우수하나 경제적으로 어려움을 겪는 학생 · 의대(본과 2학년 진학 예정자) 재…",
+   "amount": "3년 등록금 전액 의/약대 각 1명 · 1년 등록금 전액 의/약대 1명",
    "med": true,
    "scope": "med",
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "ef49031653edf453": {
    "id": "ef49031653edf453",
@@ -59,7 +60,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "149d22ed6a44b3f2": {
    "id": "149d22ed6a44b3f2",
@@ -79,7 +81,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "61c9e63a57838521": {
    "id": "61c9e63a57838521",
@@ -99,7 +102,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "5060706a1755a93e": {
    "id": "5060706a1755a93e",
@@ -113,13 +117,14 @@
    "apply_start": "2026-01-01",
    "apply_end": "2026-12-31",
    "target": "전공 무관 / 농업경영을 목적으로 가족이 영주시 농촌지역에 함께 이주하여 주민등록을 … / 세대주가 만 65세 이하※ 자세한 사항은 첨부파일 또는 홈페이지 참고",
-   "amount": "100만원 범위 내 귀농인 자녀 대학생에 장학금(입학금/등록금)지원○ 농가당 3년간 지원 가능",
+   "amount": "100만원 범위 내 귀농인 자녀 대학생에 장학금(입학금/등록금)지원 · 농가당 3년간 지원 가능",
    "med": false,
    "scope": "open",
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "aff27179e6ac4868": {
    "id": "aff27179e6ac4868",
@@ -132,14 +137,15 @@
    "org": "경상남도 고성군청",
    "apply_start": "2026-03-18",
    "apply_end": "2026-11-30",
-   "target": "전공 무관 / 보호자가 신청일 전 6개월 이상 고성군 관내에 주민등록을 두고 계속 거주 / 24세 이하 둘째아 이상 자녀○ 단 둘째아의 경우 25년 입학생 이후…",
+   "target": "전공 무관 / 보호자가 신청일 전 6개월 이상 고성군 관내에 주민등록을 두고 계속 거주 / 24세 이하 둘째아 이상 자녀 · 단 둘째아의 경우 25년 입학생 이…",
    "amount": "대학등록금 100만원 한도 내 지원",
    "med": false,
    "scope": "open",
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "f08743b591acf33d": {
    "id": "f08743b591acf33d",
@@ -159,7 +165,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "dc95401de9d2cc7b": {
    "id": "dc95401de9d2cc7b",
@@ -179,7 +186,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "189de13498626439": {
    "id": "189de13498626439",
@@ -199,7 +207,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "45055c1075f6596b": {
    "id": "45055c1075f6596b",
@@ -212,14 +221,15 @@
    "org": "춘향장학재단",
    "apply_start": "2026-01-26",
    "apply_end": "2026-12-31",
-   "target": "전공 무관 / 수상 기준일 본인 또는 보호자가 남원시에 3년 이상 주민등록상 주소지를… / 대회수상 (체육/예술 분야)○ 국가대표선발※ 자세한 사항은 첨부파일 …",
-   "amount": "대회수상 장학금: 50만원(개인)~1700만원(단체)○ 국가대표선발 장학금: 400백만원※ 자세한 사항은 첨부파일 또는 홈페…",
+   "target": "전공 무관 / 수상 기준일 본인 또는 보호자가 남원시에 3년 이상 주민등록상 주소지를… / 대회수상 (체육/예술 분야) · 국가대표선발※ 자세한 사항은 첨부파일…",
+   "amount": "대회수상 장학금: 50만원(개인)~1700만원(단체) · 국가대표선발 장학금: 400백만원※ 자세한 사항은 첨부파일 또는 홈…",
    "med": false,
    "scope": "open",
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "8e7153271fa6b915": {
    "id": "8e7153271fa6b915",
@@ -239,7 +249,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "473169f21ea90157": {
    "id": "473169f21ea90157",
@@ -252,14 +263,15 @@
    "org": "사립학교교직원연금공단",
    "apply_start": "2026-07-01",
    "apply_end": "2026-12-15",
-   "target": "전공 무관 / 교직원 본인 및 자녀의 대학(학사) 등록금○ 고등교육법 제2조 각호의 학교 또는 외국 정…",
-   "amount": "국내대학 : 당해 연도의 해당 학기 실등록금 납부액 범위 내○ 해외대학 : 연간 $10000(미화) 이내의 실등록금 소요액○…",
+   "target": "전공 무관 / 교직원 본인 및 자녀의 대학(학사) 등록금 · 고등교육법 제2조 각호의 학교 또는 외국 …",
+   "amount": "국내대학 : 당해 연도의 해당 학기 실등록금 납부액 범위 내 · 해외대학 : 연간 $10000(미화) 이내의 실등록금 소요액…",
    "med": false,
    "scope": "open",
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "02c12125f3831d59": {
    "id": "02c12125f3831d59",
@@ -279,7 +291,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "b3a06d20b6a2319a": {
    "id": "b3a06d20b6a2319a",
@@ -299,7 +312,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "f0a3941685756117": {
    "id": "f0a3941685756117",
@@ -319,7 +333,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "d432bdf5532ae94e": {
    "id": "d432bdf5532ae94e",
@@ -339,7 +354,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "8147f16fa5e3e461": {
    "id": "8147f16fa5e3e461",
@@ -359,7 +375,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "753f874132cada42": {
    "id": "753f874132cada42",
@@ -372,14 +389,15 @@
    "org": "(재)영광군미래교육재단",
    "apply_start": "2026-11-02",
    "apply_end": "2026-11-27",
-   "target": "전공 무관 / 보호자가 공고일 현재 3년 이상 계속하여 영광군에 주민등록을 두고 있어… / 「고등교육법」제2조에 해당하는 학교 재학생○「평생교육법」제31조제4항…",
+   "target": "전공 무관 / 보호자가 공고일 현재 3년 이상 계속하여 영광군에 주민등록을 두고 있어… / 「고등교육법」제2조에 해당하는 학교 재학생 · 「평생교육법」제31조제…",
    "amount": "200만 원 한도 내 등록금 실 납부액 지원",
    "med": false,
    "scope": "open",
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "409d1e57379a522c": {
    "id": "409d1e57379a522c",
@@ -399,7 +417,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "1bdf7220c35a85d6": {
    "id": "1bdf7220c35a85d6",
@@ -419,7 +438,8 @@
    "region": false,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": false
   },
   "a8d0599d7603e1b5": {
    "id": "a8d0599d7603e1b5",
@@ -439,7 +459,8 @@
    "region": true,
    "detail_done": true,
    "llm_done": false,
-   "last_seen": "2026-11-24"
+   "last_seen": "2026-11-24",
+   "special": true
   },
   "c5028142794b6e2e": {
    "id": "c5028142794b6e2e",
@@ -545,81 +566,83 @@
  "sources": {
   "한국장학재단 학자금지원정보": {
    "type": "kosaf_api",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "정상",
    "error": "",
-   "count": 22,
-   "read": 22,
-   "last_ok": "2026-11-24 16:49"
+   "count": 21,
+   "read": 21,
+   "last_ok": "2026-11-24 16:58"
   },
   "(재)보건장학회": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "새 공고 없음",
    "error": "",
    "count": 0,
    "read": 5,
-   "last_ok": "2026-11-24 16:49"
+   "last_ok": "2026-11-24 16:58"
   },
   "아산사회복지재단": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "정상",
    "error": "",
    "count": 4,
    "read": 10,
-   "last_ok": "2026-11-24 16:49"
+   "last_ok": "2026-11-24 16:58"
   },
   "공공보건의료교육훈련센터(공중보건장학)": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "새 공고 없음",
    "error": "",
    "count": 0,
-   "read": 2,
-   "last_ok": "2026-11-24 16:49"
+   "read": 16,
+   "last_ok": "2026-11-24 16:58"
   },
   "관정이종환교육재단": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "새 공고 없음",
    "error": "",
    "count": 0,
    "read": 15,
-   "last_ok": "2026-11-24 16:49"
+   "last_ok": "2026-11-24 16:58"
   },
   "종근당고촌재단": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "새 공고 없음",
    "error": "",
    "count": 0,
    "read": 8,
-   "last_ok": "2026-11-24 16:49"
+   "last_ok": "2026-11-24 16:58"
   },
   "우양재단": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "정상",
    "error": "",
    "count": 1,
    "read": 18,
-   "last_ok": "2026-11-24 16:49"
+   "last_ok": "2026-11-24 16:58"
   },
   "DB김준기문화재단": {
    "type": "html_list",
-   "last_run": "2026-11-24 16:49",
-   "status": "확인 필요",
-   "error": "게시글을 하나도 읽지 못함. 사이트 구조가 바뀌었거나 자바스크립트로만 열리는 게시판일 수 있음",
-   "count": 0
+   "last_run": "2026-11-24 16:58",
+   "status": "새 공고 없음",
+   "error": "",
+   "count": 0,
+   "read": 4,
+   "last_ok": "2026-11-24 16:58"
   },
   "네이버 뉴스 검색": {
    "type": "naver_news",
-   "last_run": "2026-11-24 16:49",
+   "last_run": "2026-11-24 16:58",
    "status": "실패",
    "error": "NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 없어 건너뜀",
    "count": 0
   }
  },
- "generated": "2026-11-24 16:49"
+ "generated": "2026-11-24 16:58"
 }
