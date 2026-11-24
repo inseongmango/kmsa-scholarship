@@ -14,7 +14,7 @@ settings:
   include_keywords: [장학, 학자금]
   # 제목에 아래 단어가 있으면 제외 (선발 결과, 수여식 같은 글)
   # 뉴스에 많은 '장학금 전달·기탁' 기사와 교내 장학금도 여기서 걸러진다
-  exclude_keywords: [결과, 합격자, 선정자, 명단, 수여식, 전달, 기탁, 쾌척, 시상, 만족도, 서약서, 지급 완료, 반환, 근로장학생 근무, 교내, 본교, "[마감]", "[발표]", "*발표*"]
+  exclude_keywords: [결과, 합격자, 선정자, 명단, 수여식, 전달, 기탁, 쾌척, 시상, 만족도, 서약서, 지급 완료, 반환, 근로장학생 근무, 교내, 본교, "[마감]", "[발표]", "*발표*", 제출 안내, 증명서, 할인]
 
 sources:
   # 1. 한국장학재단 학자금지원정보(대학생) - 공공데이터포털 오픈 API
@@ -33,7 +33,7 @@ sources:
   - name: 아산사회복지재단
     type: html_list
     url: https://www.asanfoundation.or.kr/af/foundation/notice/afFoundationNoticeList.do?noticeTypeClsf=N
-    link_pattern: "afFoundationNoticeDetail\\.do\\?idx=\\d+"
+    link_pattern: "afFoundationNoticeDetail\\.do"
     exclude_keywords: [북한이탈, 청소년]
 
   - name: 공공보건의료교육훈련센터(공중보건장학)
@@ -61,8 +61,8 @@ sources:
 
   - name: DB김준기문화재단
     type: html_list
-    url: https://www.dbfoundation.or.kr/news/notice/notice
-    # 게시글 링크가 자바스크립트로 처리돼 목록의 글자만 읽는다. 링크는 공지 목록 페이지로 연결된다.
+    # 공지 목록 페이지는 자바스크립트로 열려 비어 있다. 첫 화면의 '최근 공지'(날짜 포함)를 읽는다.
+    url: https://www.dbfoundation.or.kr/
     include_keywords: [장학, 드림리더, 드림서포터]
 
   #    아래 재단은 자동 수집이 안 되는 곳이다. 주소를 확인해 html_list 로 추가하거나 사람이 직접 확인한다.

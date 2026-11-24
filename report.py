@@ -38,12 +38,12 @@ def grouped(state: dict) -> list[dict]:
 
 
 def write_csv(state: dict, path: Path) -> None:
-    cols = ["구분", "제목", "주관기관", "신청시작", "마감", "지원대상", "지원금액", "출처", "원문", "처음발견", "게시일"]
+    cols = ["구분", "지역제한", "제목", "주관기관", "신청시작", "마감", "지원대상", "지원금액", "출처", "원문", "처음발견", "게시일"]
     with path.open("w", newline="", encoding="utf-8-sig") as fp:
         w = csv.writer(fp)
         w.writerow(cols)
         for it in grouped(state):
-            w.writerow(["의대 관련" if it.get("med") else "전공 무관", it["title"], it.get("org", ""), it.get("apply_start", ""),
+            w.writerow(["의대 관련" if it.get("med") else "전공 무관", "O" if it.get("region") else "", it["title"], it.get("org", ""), it.get("apply_start", ""),
                         it.get("apply_end", ""), it.get("target", ""), it.get("amount", ""), it["source"], it["url"],
                         it["first_seen"], it.get("posted", "")])
 
@@ -95,7 +95,7 @@ h1{font-size:42px;font-weight:300;line-height:1.2;margin:0 0 12px;letter-spacing
 .controls .wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 input[type=search],select{font:inherit;letter-spacing:.16px;height:40px;padding:0 16px;border:none;border-bottom:1px solid #8d8d8d;background:var(--surface-1);color:var(--ink);outline:none}
 input[type=search]:focus,select:focus{outline:2px solid var(--primary);outline-offset:-2px}
-input[type=search]{flex:1 1 260px;min-width:200px}
+input[type=search]{flex:1 1 180px;min-width:160px}
 .chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid var(--hairline);background:var(--canvas);cursor:pointer;font-size:14px;user-select:none}
 .chip input{margin:0;accent-color:var(--primary)}
 .chip:has(input:checked){border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
@@ -116,6 +116,7 @@ tr.done td{opacity:.45}
 .b-urgent{background:var(--red-bg);color:var(--red-ink);box-shadow:inset 3px 0 0 var(--red)}
 .b-soon{background:var(--yellow-bg);color:var(--yellow-ink);box-shadow:inset 3px 0 0 var(--yellow)}
 .b-ok{background:var(--surface-1);color:var(--ink)}
+.b-region{background:var(--canvas);border:1px solid var(--ink-subtle);color:var(--ink-muted);padding:3px 7px}
 .b-closed{background:var(--surface-1);color:var(--ink-subtle)}
 .b-unknown{background:var(--canvas);border:1px dashed var(--ink-subtle);color:var(--ink-muted);padding:3px 7px}
 .period{white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -134,7 +135,7 @@ details[open] summary{border-bottom:1px solid var(--hairline)}
 .health{width:100%}
 .health th{background:var(--canvas);font-size:13px;height:40px}
 .health td{font-size:13px;padding:10px 16px}
-.st-ok{color:var(--green-ink);font-weight:600}.st-bad{color:var(--red-ink);font-weight:600}
+.st-ok{color:var(--green-ink);font-weight:600}.st-none{color:var(--ink-muted);font-weight:600}.st-bad{color:var(--red-ink);font-weight:600}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--inverse);color:#fff;padding:14px 20px;font-size:14px;box-shadow:inset 3px 0 0 var(--green);opacity:0;transition:opacity .15s;pointer-events:none}
 .toast.show{opacity:1}
 @media (max-width:760px){
@@ -177,6 +178,7 @@ details[open] summary{border-bottom:1px solid var(--hairline)}
   <label class="chip"><input type="checkbox" id="fOpen" checked> 마감 지난 공고 숨기기</label>
   <label class="chip"><input type="checkbox" id="fNew"> 새 공고만</label>
   <label class="chip"><input type="checkbox" id="fDone"> 게시 완료 숨기기</label>
+  <label class="chip"><input type="checkbox" id="fRegion"> 지역 제한 포함</label>
   <select id="fSrc"><option value="">전체 출처</option></select>
   <select id="sort"><option value="end">마감 임박순</option><option value="new">최근 발견순</option></select>
 </div></div>
@@ -220,9 +222,20 @@ function postText(it) {
   return lines.join('\n');
 }
 
+function renderStats(items) {
+  const open = items.filter(it => { const n = daysTo(it.apply_end); return n === null || n >= 0; });
+  const soon = open.filter(it => { const n = daysTo(it.apply_end); return n !== null && n <= 7; });
+  $('stats').innerHTML = [
+    ['진행 중·확인 필요', open.length], ['7일 안에 마감', soon.length],
+    ['새로 발견', items.filter(isNew).length], ['의대 관련', open.filter(it => it.med).length]
+  ].map(([l, n], i) => `<div class="stat${i === 1 && n > 0 ? ' hl' : ''}"><b>${n}</b><span>${l}</span></div>`).join('');
+}
+
 function render() {
   const q = $('q').value.trim().toLowerCase();
-  let list = DATA.items.filter(it => {
+  const base = DATA.items.filter(it => $('fRegion').checked || !it.region);
+  renderStats(base);
+  let list = base.filter(it => {
     if ($('fMed').checked && !it.med) return false;
     if ($('fOpen').checked) { const n = daysTo(it.apply_end); if (n !== null && n < 0) return false; }
     if ($('fNew').checked && !isNew(it)) return false;
@@ -236,7 +249,7 @@ function render() {
     const [st, cls] = status(it);
     const others = (it.others || []);
     return `<tr class="${done[it.id] ? 'done' : ''}">
-      <td data-l="상태">${isNew(it) ? '<span class="badge b-new">NEW</span>' : ''}<span class="badge ${cls}">${st}</span>${it.med ? '<span class="badge b-med">의대 관련</span>' : '<span class="badge b-open">전공 무관</span>'}</td>
+      <td data-l="상태">${isNew(it) ? '<span class="badge b-new">NEW</span>' : ''}<span class="badge ${cls}">${st}</span>${it.med ? '<span class="badge b-med">의대 관련</span>' : '<span class="badge b-open">전공 무관</span>'}${it.region ? '<span class="badge b-region">지역 제한</span>' : ''}</td>
       <td class="title"><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>
         ${it.org ? `<div class="sub">${esc(it.org)}</div>` : ''}
         ${it.target ? `<div class="sub">대상: ${esc(it.target)}</div>` : ''}
@@ -252,17 +265,11 @@ function render() {
 function init() {
   $('gen').textContent = DATA.generated || '-';
   const items = DATA.items;
-  const open = items.filter(it => { const n = daysTo(it.apply_end); return n === null || n >= 0; });
-  const soon = open.filter(it => { const n = daysTo(it.apply_end); return n !== null && n <= 7; });
-  $('stats').innerHTML = [
-    ['진행 중·확인 필요', open.length], ['7일 안에 마감', soon.length],
-    ['새로 발견', items.filter(isNew).length], ['의대 관련', open.filter(it => it.med).length]
-  ].map(([l, n], i) => `<div class="stat${i === 1 && n > 0 ? ' hl' : ''}"><b>${n}</b><span>${l}</span></div>`).join('');
   const srcs = [...new Set(items.flatMap(it => [it.source, ...(it.others || []).map(o => o.source)]))].sort();
   $('fSrc').innerHTML += srcs.map(s => `<option>${esc(s)}</option>`).join('');
   $('health').innerHTML = Object.entries(DATA.sources).map(([n, h]) =>
-    `<tr><td>${esc(n)}</td><td class="${h.status === '정상' ? 'st-ok' : 'st-bad'}">${esc(h.status || '-')}</td><td>${h.count ?? '-'}</td><td>${esc(h.last_ok || '-')}</td><td>${esc(h.error || '')}</td></tr>`).join('');
-  ['q', 'fMed', 'fOpen', 'fNew', 'fDone', 'fSrc', 'sort'].forEach(id => $(id).addEventListener('input', render));
+    `<tr><td>${esc(n)}</td><td class="${h.status === '정상' ? 'st-ok' : h.status === '새 공고 없음' ? 'st-none' : 'st-bad'}">${esc(h.status || '-')}</td><td>${h.count ?? '-'}${h.read != null ? ` <span class="sub">(글 ${h.read}개 확인)</span>` : ''}</td><td>${esc(h.last_ok || '-')}</td><td>${esc(h.error || '')}</td></tr>`).join('');
+  ['q', 'fMed', 'fOpen', 'fNew', 'fDone', 'fRegion', 'fSrc', 'sort'].forEach(id => $(id).addEventListener('input', render));
   $('rows').addEventListener('click', async e => {
     const b = e.target.closest('button.copy');
     if (!b) return;

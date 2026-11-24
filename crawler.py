@@ -156,9 +156,14 @@ def parse_html_list(text: str, base_url: str, link_pattern: str | None = None, k
     링크는 그 줄 안의 실제 주소나 게시판 목록 주소로 대신한다.
     """
     soup = BeautifulSoup(text, "lxml")
+    for t in soup(["nav", "header", "footer", "script", "style"]):
+        t.decompose()
+    for t in soup.select("#gnb, #lnb, .gnb, .lnb, #header, #footer, .sitemap, .quick, .menu, #menu"):
+        t.decompose()
     out, seen = [], set()
     if link_pattern:
         pat = re.compile(link_pattern)
+        found = []
         for a in soup.find_all("a", href=True):
             href = a["href"]
             if not pat.search(href):
@@ -166,15 +171,23 @@ def parse_html_list(text: str, base_url: str, link_pattern: str | None = None, k
             url = urljoin(base_url, href)
             title = clean(a.get("title") or a.get_text(" "))
             title = re.sub(r"(\s+(새글|NEW|new|N|첨부파일|파일|댓글\s*\d+)|\s*\[\d+\])+\s*$", "", title)
-            if len(title) < 4 or url in seen:
+            if len(title) < 4 or (title, url) in seen:
                 continue
-            seen.add(url)
+            seen.add((title, url))
             row = a.find_parent(["tr", "li", "dl"]) or a.parent
             m = POSTED_RE.search(row.get_text(" ") if row else "")
             posted = ex.parse_any_date(m.group(1)) if m else None
-            out.append({"title": title, "url": url, "posted": posted, "desc": ""})
-        if out:
-            return out
+            found.append({"title": title, "url": url, "posted": posted, "desc": ""})
+        # 글 번호 없이 여러 글이 같은 주소를 쓰면(자바스크립트로 여는 게시판) 제목으로 구분하고 목록 주소로 연결
+        titles_per_url: dict[str, set] = {}
+        for x in found:
+            titles_per_url.setdefault(x["url"], set()).add(x["title"])
+        for x in found:
+            if len(titles_per_url[x["url"]]) > 1:
+                x["url"], x["list_only"] = base_url, True
+        if found:
+            return found
+        seen = set()
 
     # 줄 단위 읽기 (링크를 찾지 못한 경우)
     kws = keywords or ["장학"]
@@ -186,6 +199,8 @@ def parse_html_list(text: str, base_url: str, link_pattern: str | None = None, k
             continue
         m = POSTED_RE.search(raw)
         posted = ex.parse_any_date(m.group(1)) if m else None
+        if not posted:  # 날짜가 없는 줄은 메뉴일 가능성이 커서 건너뛴다
+            continue
         title = POSTED_RE.sub(" ", raw)
         title = re.sub(r"^\s*(\d+|공지|NEW|N)\s+", "", title)
         title = re.sub(r"\s+(조회수?\s*)?\d+\s*$", "", clean(title))
@@ -229,44 +244,89 @@ def fetch_kosaf(f: Fetcher, src: dict, key: str, today: dt.date) -> list[dict]:
 
     out = []
     for row in rows:
-        g = lambda k: clean(str(row.get(k) or ""))  # noqa: E731
-        start, end = ex.parse_any_date(g("모집시작일")), ex.parse_any_date(g("모집종료일"))
-        if end and end < today:
-            continue
-        if not end and (not start or start < today - dt.timedelta(days=90)):
-            continue
-        name, org = g("상품명"), g("운영기관명")
-        url = g("홈페이지 주소")
-        if url and not url.startswith("http"):
-            url = "http://" + url
-        # 특정 대학이 자기 학생에게 주는 교내 장학금은 제외
-        if re.search(r"대학|학교", g("운영기관구분")) or ex.UNIV_RE.search(name):
-            continue
-        target = " / ".join(x for x in (g("대학구분"), g("학년구분"), g("학과구분")) if x and x not in ("-", "해당없음"))
-        quals = " ".join((g("학과구분"), g("특정자격 상세내용"), g("자격제한 상세내용")))
-        if ex.is_med_related(name, quals):
-            scope = "med"
-        elif re.search(r"전문대", g("대학구분")) and not re.search(r"4년|일반|제한|전체|무관", g("대학구분")):
-            scope = "other"
-        elif re.search(r"특정", g("학과구분")) or ex.OTHER_RE.search(g("학과구분")):
-            scope = "other"
-        else:
-            scope = "open"
-        out.append({
-            "id": item_id("kosaf", org, name, g("모집시작일")),
-            "title": name,
-            "url": url or "https://www.data.go.kr/data/15028252/fileData.do",
-            "posted": start,
-            "org": org,
-            "apply_start": start.isoformat() if start else "",
-            "apply_end": end.isoformat() if end else "",
-            "target": ex._short(target, 90),
-            "amount": ex._short(g("지원내역 상세내용"), 70),
-            "scope": scope,
-            "med": scope == "med",
-            "detail_done": True,
-        })
+        item = kosaf_row(row, today)
+        if item:
+            out.append(item)
     return out
+
+
+# 장학금이 아닌 지원사업(대출·근로·멘토링 활동비 등)
+KOSAF_SKIP_RE = re.compile(r"대출|대부|연체|신용회복|근로|멘토링|캠프|워킹\s*홀리데이|생계\s*지원|활동\s*(시급|지원금|비)")
+FIELDS_RE = re.compile(r"(공학|교육|사회|예체능|의약|인문|자연)계열")
+REGION_DETAIL_RE = re.compile(r"거주|출신|소재|연고|주민|전입|관내|도내|시내|군내|구내")
+GOV_ORG_RE = re.compile(r"(시청|군청|구청|도청|교육청)$")
+
+
+def kosaf_row(row: dict, today: dt.date) -> dict | None:
+    """공공데이터 한 줄을 공고 하나로 바꾼다. 게시판에 올릴 대상이 아니면 None."""
+    def g(*keys):
+        for k in keys:
+            v = clean(str(row.get(k) or ""))
+            if v and v not in ("-", "해당없음", "없음"):
+                return v
+        return ""
+
+    start, end = ex.parse_any_date(g("모집시작일")), ex.parse_any_date(g("모집종료일"))
+    if end and end < today:
+        return None
+    if not end and (not start or start < today - dt.timedelta(days=90)):
+        return None
+    name, org = g("상품명"), g("운영기관명")
+    kind = " ".join((g("상품구분"), g("학자금유형구분", "학자금 지원 유형", "학자금지원유형")))
+    amount_raw = g("지원내역 상세내용")
+    # 교내 장학금, 장학금이 아닌 지원사업은 제외
+    if re.search(r"대학|학교", g("운영기관구분")) or ex.UNIV_RE.search(name):
+        return None
+    if KOSAF_SKIP_RE.search(f"{name} {kind}") or re.search(r"시급|활동\s*지원금", amount_raw):
+        return None
+
+    dept, quals = g("학과구분"), " ".join((g("특정자격 상세내용"), g("자격제한 상세내용")))
+    fields = set(FIELDS_RE.findall(dept))
+    if ex.is_med_related(name, quals) or fields == {"의약"}:
+        scope = "med"
+    elif re.search(r"간호", f"{name} {org}"):
+        scope = "other"
+    elif re.search(r"전문대", g("대학구분")) and not re.search(r"4년|일반|제한|전체|무관", g("대학구분")):
+        scope = "other"
+    elif fields and "의약" not in fields:
+        scope = "other"
+    elif "특정" in dept and not fields:
+        scope = "other"
+    else:
+        scope = "open"
+
+    region_txt = g("지역거주여부 상세내용")
+    region = bool(
+        (region_txt and REGION_DETAIL_RE.search(region_txt))
+        or "지역" in kind
+        or GOV_ORG_RE.search(org)
+    )
+    dept_txt = "의약계열" if scope == "med" and fields == {"의약"} else ("전공 무관" if scope == "open" else "")
+    target = " / ".join(x for x in (
+        dept_txt,
+        ex._short(region_txt, 40) if region and region_txt else ("지역 제한" if region else ""),
+        ex._short(g("특정자격 상세내용"), 50),
+    ) if x)
+
+    url = g("홈페이지 주소")
+    if url and not url.startswith("http"):
+        url = "http://" + url
+    url = re.sub(r"\.do(?=[A-Za-z]\w*=)", ".do?", url)  # 원본 데이터의 '?' 빠진 주소 보정
+    return {
+        "id": item_id("kosaf", org, name, g("모집시작일")),
+        "title": name,
+        "url": url or "https://www.data.go.kr/data/15028252/fileData.do",
+        "posted": start,
+        "org": org,
+        "apply_start": start.isoformat() if start else "",
+        "apply_end": end.isoformat() if end else "",
+        "target": ex._short(target, 90),
+        "amount": ex._short(amount_raw, 70),
+        "scope": scope,
+        "med": scope == "med",
+        "region": region,
+        "detail_done": True,
+    }
 
 
 def fetch_naver(f: Fetcher, src: dict, cid: str, secret: str) -> list[dict]:
@@ -289,10 +349,15 @@ def fetch_naver(f: Fetcher, src: dict, cid: str, secret: str) -> list[dict]:
 
 
 # ====================================================================== 메인
+STATE_VERSION = 2  # 분류 규칙이 바뀌면 올려서 이전 수집 결과를 한 번 비운다
+
+
 def load_state(path: Path) -> dict:
     if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return {"items": {}, "sources": {}}
+        st = json.loads(path.read_text(encoding="utf-8"))
+        if st.get("version") == STATE_VERSION:
+            return st
+    return {"version": STATE_VERSION, "items": {}, "sources": {}}
 
 
 def run(cfg: dict, state: dict, today: dt.date) -> None:
@@ -354,12 +419,12 @@ def run(cfg: dict, state: dict, today: dt.date) -> None:
                 it = items[iid] = {
                     "id": iid, "title": r["title"], "url": r["url"], "source": name, "source_type": typ,
                     "posted": posted.isoformat() if posted else "", "first_seen": today.isoformat(),
-                    "org": "", "apply_start": "", "apply_end": "", "target": "", "amount": "", "med": False, "scope": "",
+                    "org": "", "apply_start": "", "apply_end": "", "target": "", "amount": "", "med": False, "scope": "", "region": False,
                     "detail_done": False, "llm_done": False,
                 }
             it["last_seen"] = today.isoformat()
             it["title"] = r["title"]
-            for k in ("org", "apply_start", "apply_end", "target", "amount", "med", "scope", "detail_done"):
+            for k in ("org", "apply_start", "apply_end", "target", "amount", "med", "scope", "region", "detail_done"):
                 if k in r:
                     it[k] = r[k]
             kept += 1
@@ -395,7 +460,7 @@ def run(cfg: dict, state: dict, today: dt.date) -> None:
             health.update({"status": "확인 필요", "error": "게시글을 하나도 읽지 못함. 사이트 구조가 바뀌었거나 자바스크립트로만 열리는 게시판일 수 있음", "count": 0})
             log.warning("[%s] 게시글 0건 - 구조 확인 필요", name)
             continue
-        health.update({"status": "정상", "error": "", "count": kept, "last_ok": now})
+        health.update({"status": "정상" if kept else "새 공고 없음", "error": "", "count": kept, "read": len(raw), "last_ok": now})
         log.info("[%s] %d건", name, kept)
 
     # 오래된 공고 정리

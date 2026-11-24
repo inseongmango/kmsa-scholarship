@@ -127,12 +127,16 @@ ORG_INLINE_RE = re.compile(r"((?:\(재\)|재단법인|\(사\)|사단법인)?\s*[
 
 # 치의학·한의학·수의학은 '의학'에 걸리지 않도록 앞 글자를 막는다
 MED_RE = re.compile(
-    r"(?<![치한수협회논합동건결주])(?:의과\s*대학|의학과|의예과|의대생|의대|의학\s*전문\s*대학원|의학)|의전원|공중보건\s*장학|의생명|의약\s*계열|예비\s*의사"
+    r"(?<![치한수협회논합동건결주])(?:의과\s*대학|의학과|의예과|의대생|의대|의학\s*전문\s*대학원|의학)|의전원|공중보건\s*장학|의생명|의약\s*계열|예비\s*의사|의\s*[/·・]\s*(?:약|치|한)"
 )
 # 의대생이 지원할 수 없는 다른 전공 전용 표현
 OTHER_RE = re.compile(
-    r"이공계|공학\s*계열|자연\s*계열|인문\s*계열|사회\s*계열|예체능|간호(?:학과|대학|학)|약학(?:대학|과)?|약대|"
+    r"이공계|공학\s*계열|자연\s*계열|인문\s*계열|사회\s*계열|예체능|간호|약학(?:대학|과)?|약대|"
     r"치의학|치과대학|한의학|한의대|수의학|수의대|사범대|교육대학|공과대학|법학전문대학원|로스쿨|전문대학|특성화고"
+)
+# 특정 지역 주민·출신만 지원할 수 있는 장학금
+REGION_RE = re.compile(
+    r"[가-힣]{1,6}(?:시|군|구|도)\s*(?:에\s*)?(?:거주|출신|소재|연고)|거주\s*(?:자|학생|대학생|하는)|주민등록|관내|(?:도|시|군)내\s*(?:거주|출신)"
 )
 # 특정 대학 재학생만 대상인 교내 장학금
 UNIV_RE = re.compile(r"교내|본교|우리\s*대학|재학생\s*한정")
@@ -145,11 +149,11 @@ def _short(s: str, n: int) -> str:
 
 def extract_line(text: str, key: re.Pattern, n: int = 90, need: str | None = None) -> str:
     for ln in re.split(r"[\r\n]+", text or ""):
-        if key.search(ln) and (need is None or re.search(need, ln)):
+        if key.search(ln):
             # '1. 신청대상:' 처럼 머리말만 있는 줄이면 건너뛴다
-            body = key.split(ln, maxsplit=1)[-1] if key.search(ln) else ln
+            body = key.split(ln, maxsplit=1)[-1]
             body = re.sub(r"^[\s:：\-·•○◦□■※)]+", "", body)
-            if len(body) >= 4:
+            if len(body) >= 4 and (need is None or re.search(need, body)):
                 return _short(body, n)
     return ""
 
@@ -188,10 +192,11 @@ def extract_all(title: str, text: str, ref: dt.date) -> dict:
         "apply_start": start.isoformat() if start else "",
         "apply_end": end.isoformat() if end else "",
         "target": target,
-        "amount": extract_line(text, AMOUNT_KEY, 70, need=r"\d|전액|등록금"),
+        "amount": extract_line(text, AMOUNT_KEY, 70, need=r"\d[\d,.]*\s*(만\s*)?원|전액|등록금"),
         "org": extract_org(title, text),
         "scope": scope,
         "med": scope == "med",
+        "region": bool(REGION_RE.search(f"{title} {target}")),
     }
 
 
