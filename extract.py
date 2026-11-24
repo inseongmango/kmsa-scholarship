@@ -138,6 +138,8 @@ OTHER_RE = re.compile(
 REGION_RE = re.compile(
     r"[가-힣]{1,6}(?:시|군|구|도)\s*(?:에\s*)?(?:거주|출신|소재|연고)|거주\s*(?:자|학생|대학생|하는)|주민등록|관내|(?:도|시|군)내\s*(?:거주|출신)"
 )
+# 보훈·다자녀·교직원 자녀처럼 특정 집단만 지원할 수 있는 장학금
+SPECIAL_RE = re.compile(r"유자녀|다자녀|교직원|다문화|탈북|북한이탈|북한배경|보훈|국가유공|순직|귀농|한부모|장애인|조손|자립준비|보호종료|농어업인\s*자녀|임직원\s*자녀")
 # 특정 대학 재학생만 대상인 교내 장학금
 UNIV_RE = re.compile(r"교내|본교|우리\s*대학|재학생\s*한정")
 
@@ -197,6 +199,7 @@ def extract_all(title: str, text: str, ref: dt.date) -> dict:
         "scope": scope,
         "med": scope == "med",
         "region": bool(REGION_RE.search(f"{title} {target}")),
+        "special": bool(SPECIAL_RE.search(f"{title} {target}")),
     }
 
 

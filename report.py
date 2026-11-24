@@ -202,9 +202,14 @@ let done = {};
 try { done = JSON.parse(localStorage.getItem('kmsa-done') || '{}'); } catch (e) {}
 const saveDone = () => { try { localStorage.setItem('kmsa-done', JSON.stringify(done)); } catch (e) {} };
 
+// 마감일을 모르는 공고는 게시(또는 발견) 후 30일이 지나면 마감됐을 가능성이 높다고 본다
+const STALE_DAYS = 30;
+const isStale = it => !it.apply_end && (TODAY - toDate(it.posted || it.first_seen)) / 864e5 > STALE_DAYS;
+const isClosed = it => { const n = daysTo(it.apply_end); return (n !== null && n < 0) || isStale(it); };
+
 function status(it) {
   const n = daysTo(it.apply_end);
-  if (n === null) return ['기간 확인 필요', 'b-unknown'];
+  if (n === null) return isStale(it) ? ['마감 추정(30일 경과)', 'b-closed'] : ['기간 확인 필요', 'b-unknown'];
   if (n < 0) return ['마감', 'b-closed'];
   if (n === 0) return ['오늘 마감', 'b-urgent'];
   if (n <= 3) return ['D-' + n, 'b-urgent'];
@@ -223,11 +228,11 @@ function postText(it) {
 }
 
 function renderStats(items) {
-  const open = items.filter(it => { const n = daysTo(it.apply_end); return n === null || n >= 0; });
+  const open = items.filter(it => !isClosed(it));
   const soon = open.filter(it => { const n = daysTo(it.apply_end); return n !== null && n <= 7; });
   $('stats').innerHTML = [
     ['진행 중·확인 필요', open.length], ['7일 안에 마감', soon.length],
-    ['새로 발견', items.filter(isNew).length], ['의대 관련', open.filter(it => it.med).length]
+    ['새로 발견', open.filter(isNew).length], ['의대 관련', open.filter(it => it.med).length]
   ].map(([l, n], i) => `<div class="stat${i === 1 && n > 0 ? ' hl' : ''}"><b>${n}</b><span>${l}</span></div>`).join('');
 }
 
@@ -237,7 +242,7 @@ function render() {
   renderStats(base);
   let list = base.filter(it => {
     if ($('fMed').checked && !it.med) return false;
-    if ($('fOpen').checked) { const n = daysTo(it.apply_end); if (n !== null && n < 0) return false; }
+    if ($('fOpen').checked && isClosed(it)) return false;
     if ($('fNew').checked && !isNew(it)) return false;
     if ($('fDone').checked && done[it.id]) return false;
     if ($('fSrc').value && it.source !== $('fSrc').value && !(it.others||[]).some(o => o.source === $('fSrc').value)) return false;
@@ -249,7 +254,7 @@ function render() {
     const [st, cls] = status(it);
     const others = (it.others || []);
     return `<tr class="${done[it.id] ? 'done' : ''}">
-      <td data-l="상태">${isNew(it) ? '<span class="badge b-new">NEW</span>' : ''}<span class="badge ${cls}">${st}</span>${it.med ? '<span class="badge b-med">의대 관련</span>' : '<span class="badge b-open">전공 무관</span>'}${it.region ? '<span class="badge b-region">지역 제한</span>' : ''}</td>
+      <td data-l="상태">${isNew(it) ? '<span class="badge b-new">NEW</span>' : ''}<span class="badge ${cls}">${st}</span>${it.med ? '<span class="badge b-med">의대 관련</span>' : '<span class="badge b-open">전공 무관</span>'}${it.region ? '<span class="badge b-region">지역 제한</span>' : ''}${it.special ? '<span class="badge b-region">특정 대상</span>' : ''}</td>
       <td class="title"><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>
         ${it.org ? `<div class="sub">${esc(it.org)}</div>` : ''}
         ${it.target ? `<div class="sub">대상: ${esc(it.target)}</div>` : ''}

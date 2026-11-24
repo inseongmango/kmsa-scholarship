@@ -189,31 +189,38 @@ def parse_html_list(text: str, base_url: str, link_pattern: str | None = None, k
             return found
         seen = set()
 
-    # 줄 단위 읽기 (링크를 찾지 못한 경우)
-    kws = keywords or ["장학"]
-    for row in soup.find_all(["tr", "li"]):
-        if row.find(["tr", "li"]):  # 바깥 껍데기 줄은 건너뛴다
-            continue
-        raw = clean(row.get_text(" "))
-        if not any(k in raw for k in kws) or not (6 <= len(raw) <= 200):
-            continue
+    # 줄 단위 읽기 (링크를 찾지 못한 경우). 날짜가 있는 줄만 게시글로 본다.
+    def add_row(raw: str, node) -> None:
+        if not (6 <= len(raw) <= 200):
+            return
         m = POSTED_RE.search(raw)
         posted = ex.parse_any_date(m.group(1)) if m else None
         if not posted:  # 날짜가 없는 줄은 메뉴일 가능성이 커서 건너뛴다
-            continue
+            return
         title = POSTED_RE.sub(" ", raw)
-        title = re.sub(r"^\s*(\d+|공지|NEW|N)\s+", "", title)
+        title = re.sub(r"^\s*(?:(?!(?:19|20)\d{2}\b)\d{1,5}|공지|NEW|N)\s+", "", title)  # 글 번호는 지우고 연도는 남긴다
         title = re.sub(r"\s+(조회수?\s*)?\d+\s*$", "", clean(title))
-        if title in seen:
-            continue
+        if len(title) < 4 or title in seen:
+            return
         seen.add(title)
         url = base_url
-        for a in row.find_all("a", href=True):
-            h = a["href"].strip()
+        links = [node] if node.name == "a" else node.find_all("a", href=True)
+        for a in links:
+            h = (a.get("href") or "").strip()
             if h and not h.startswith(("#", "javascript", "mailto")):
                 url = urljoin(base_url, h)
                 break
         out.append({"title": title, "url": url, "posted": posted, "desc": "", "list_only": url == base_url})
+
+    for row in soup.find_all(["tr", "li"]):
+        if not row.find(["tr", "li"]):  # 바깥 껍데기 줄은 건너뛴다
+            add_row(clean(row.get_text(" ")), row)
+    if not out:  # 표·목록이 아닌 카드형 게시판: 링크 글자(또는 바로 위 상자)에서 날짜를 찾는다
+        for a in soup.find_all("a"):
+            raw = clean(a.get_text(" "))
+            if not POSTED_RE.search(raw) and a.parent is not None:
+                raw = clean(a.parent.get_text(" "))
+            add_row(raw, a)
     return out
 
 
@@ -251,7 +258,7 @@ def fetch_kosaf(f: Fetcher, src: dict, key: str, today: dt.date) -> list[dict]:
 
 
 # 장학금이 아닌 지원사업(대출·근로·멘토링 활동비 등)
-KOSAF_SKIP_RE = re.compile(r"대출|대부|연체|신용회복|근로|멘토링|캠프|워킹\s*홀리데이|생계\s*지원|활동\s*(시급|지원금|비)")
+KOSAF_SKIP_RE = re.compile(r"대출|대부|연체|신용회복|근로|멘토링|캠프|워킹\s*홀리데이|생계\s*지원|연구\s*지원금|연구비|활동\s*(시급|지원금|비)")
 FIELDS_RE = re.compile(r"(공학|교육|사회|예체능|의약|인문|자연)계열")
 REGION_DETAIL_RE = re.compile(r"거주|출신|소재|연고|주민|전입|관내|도내|시내|군내|구내")
 GOV_ORG_RE = re.compile(r"(시청|군청|구청|도청|교육청)$")
@@ -261,7 +268,7 @@ def kosaf_row(row: dict, today: dt.date) -> dict | None:
     """공공데이터 한 줄을 공고 하나로 바꾼다. 게시판에 올릴 대상이 아니면 None."""
     def g(*keys):
         for k in keys:
-            v = clean(str(row.get(k) or ""))
+            v = clean(str(row.get(k) or "")).replace("○", " · ").strip(" ·")  # 원본의 ○ 구분자를 읽기 쉽게
             if v and v not in ("-", "해당없음", "없음"):
                 return v
         return ""
@@ -325,6 +332,7 @@ def kosaf_row(row: dict, today: dt.date) -> dict | None:
         "scope": scope,
         "med": scope == "med",
         "region": region,
+        "special": bool(ex.SPECIAL_RE.search(f"{name} {g('특정자격 상세내용')}")),
         "detail_done": True,
     }
 
@@ -419,12 +427,12 @@ def run(cfg: dict, state: dict, today: dt.date) -> None:
                 it = items[iid] = {
                     "id": iid, "title": r["title"], "url": r["url"], "source": name, "source_type": typ,
                     "posted": posted.isoformat() if posted else "", "first_seen": today.isoformat(),
-                    "org": "", "apply_start": "", "apply_end": "", "target": "", "amount": "", "med": False, "scope": "", "region": False,
+                    "org": "", "apply_start": "", "apply_end": "", "target": "", "amount": "", "med": False, "scope": "", "region": False, "special": False,
                     "detail_done": False, "llm_done": False,
                 }
             it["last_seen"] = today.isoformat()
             it["title"] = r["title"]
-            for k in ("org", "apply_start", "apply_end", "target", "amount", "med", "scope", "region", "detail_done"):
+            for k in ("org", "apply_start", "apply_end", "target", "amount", "med", "scope", "region", "special", "detail_done"):
                 if k in r:
                     it[k] = r[k]
             kept += 1
@@ -448,6 +456,8 @@ def run(cfg: dict, state: dict, today: dt.date) -> None:
                 for k, v in found.items():
                     if v and not it.get(k):
                         it[k] = v
+                if typ == "html_list" and not it.get("org"):
+                    it["org"] = re.sub(r"^\(재\)|\(.*?\)$", "", name).strip()
                 if llm_budget > 0 and text and not it.get("llm_done"):
                     llm_budget -= 1
                     res = ex.llm_extract(r["title"], text, ref, llm_key, llm_model)

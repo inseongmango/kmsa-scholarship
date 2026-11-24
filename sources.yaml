@@ -38,8 +38,8 @@ sources:
 
   - name: 공공보건의료교육훈련센터(공중보건장학)
     type: html_list
+    # 글 링크가 자바스크립트라 목록의 줄(제목·날짜)을 읽는다. 링크는 공지 목록으로 연결된다.
     url: https://www.edunmc.or.kr/nplms/support/notice
-    link_pattern: "/support/notice/\\d+"
     exclude_keywords: [포럼, 동문, 교육 안내, 워크숍]
 
   #    전공 무관 (의대생도 지원 가능)
