@@ -1,0 +1,100 @@
+# 의대협 장학 공고 수집 설정
+# 수집할 곳을 늘리려면 아래 sources 목록에 항목을 추가하면 된다. 방법은 README.md 참고.
+
+settings:
+  # 수집 대상 사이트 로그에 남는 이름. 문제가 생겼을 때 연락할 수 있도록 홈페이지 주소를 적어 둔다.
+  user_agent: "KMSA-ScholarshipBot/1.0 (+https://kmsa.or.kr)"
+  request_delay_seconds: 2        # 같은 사이트에 연달아 요청할 때 쉬는 시간(초)
+  max_detail_fetch_per_run: 80    # 한 번 실행할 때 새로 열어 볼 공고 상세 페이지 최대 수
+  max_llm_calls_per_run: 40       # ANTHROPIC_API_KEY가 있을 때만 사용
+  max_post_age_days: 120          # 이보다 오래된 게시글은 무시
+  keep_closed_days: 60            # 마감 후 이 기간이 지나면 목록에서 정리
+
+  # 제목에 아래 단어 중 하나가 있어야 수집 (게시판 공고, 뉴스에만 적용)
+  include_keywords: [장학, 학자금]
+  # 제목에 아래 단어가 있으면 제외 (선발 결과, 수여식 같은 글)
+  # 뉴스에 많은 '장학금 전달·기탁' 기사와 교내 장학금도 여기서 걸러진다
+  exclude_keywords: [결과, 합격자, 선정자, 명단, 수여식, 전달, 기탁, 쾌척, 시상, 만족도, 서약서, 지급 완료, 반환, 근로장학생 근무, 교내, 본교, "[마감]", "[발표]", "*발표*"]
+
+sources:
+  # 1. 한국장학재단 학자금지원정보(대학생) - 공공데이터포털 오픈 API
+  #    지자체·민간재단·대학 장학금이 모집기간과 함께 정리되어 있다. 매달 갱신.
+  #    공공데이터포털에서 활용신청 후 받은 인증키를 DATA_GO_KR_KEY 로 등록해야 동작한다.
+  - name: 한국장학재단 학자금지원정보
+    type: kosaf_api
+
+  # 2. 장학재단·기관 게시판 (2026-11-24 확인)
+  #    의대생 대상
+  - name: (재)보건장학회
+    type: html_list
+    url: https://www.kr-hff.or.kr/kor/foundation-news/notice.html
+    link_pattern: "bmain=view&uid=\\d+"
+
+  - name: 아산사회복지재단
+    type: html_list
+    url: https://www.asanfoundation.or.kr/af/foundation/notice/afFoundationNoticeList.do?noticeTypeClsf=N
+    link_pattern: "afFoundationNoticeDetail\\.do\\?idx=\\d+"
+    exclude_keywords: [북한이탈, 청소년]
+
+  - name: 공공보건의료교육훈련센터(공중보건장학)
+    type: html_list
+    url: https://www.edunmc.or.kr/nplms/support/notice
+    link_pattern: "/support/notice/\\d+"
+    exclude_keywords: [포럼, 동문, 교육 안내, 워크숍]
+
+  #    전공 무관 (의대생도 지원 가능)
+  - name: 관정이종환교육재단
+    type: html_list
+    url: https://www.ikef.or.kr/bbs/board.php?bo_table=m31
+    link_pattern: "wr_id=\\d+"
+    exclude_keywords: [국외, 유학, 성적표, 결과보고, 지급 신청, 신분변동]
+
+  - name: 종근당고촌재단
+    type: html_list
+    url: https://www.kochon.org/Notice
+    link_pattern: "/Notice/\\d+"
+
+  - name: 우양재단
+    type: html_list
+    url: https://www.wooyang.org/News
+    link_pattern: "bmode=view"
+
+  - name: DB김준기문화재단
+    type: html_list
+    url: https://www.dbfoundation.or.kr/news/notice/notice
+    # 게시글 링크가 자바스크립트로 처리돼 목록의 글자만 읽는다. 링크는 공지 목록 페이지로 연결된다.
+    include_keywords: [장학, 드림리더, 드림서포터]
+
+  #    아래 재단은 자동 수집이 안 되는 곳이다. 주소를 확인해 html_list 로 추가하거나 사람이 직접 확인한다.
+  #    - 서울장학재단/서울미래인재재단 (www.hissf.or.kr): 사이트 응답 없음
+  #    - 롯데장학재단 (www.lottefoundation.or.kr/notice?tab=notice): 목록이 자바스크립트로만 열림
+  #    - 서암윤세영재단 (foundation.sbs.co.kr/seoam): 목록을 읽지 못함
+  #    - 유한재단: 홈페이지 주소 미확인 (학교 추천으로만 선발)
+
+  #    대학 게시판은 교내 장학금이 너무 많아 기본으로 넣지 않았다. 학교 게시판에만 올라오는 외부 재단
+  #    공고까지 잡고 싶으면 아래처럼 켜면 된다. 교내·다른 전공 전용 공고는 자동으로 걸러진다.
+  - name: 연세대 학사·장학 공지
+    type: rss
+    enabled: false
+    url: https://www.yonsei.ac.kr/bbs/sc/58/rssList.do?row=50
+
+  # 3. 네이버 뉴스 검색 API - 의료 전문지 등에 실린 장학생 모집 기사
+  #    developers.naver.com 에서 애플리케이션 등록 후 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 등록.
+  - name: 네이버 뉴스 검색
+    type: naver_news
+    display: 50
+    queries:
+      - 의대생 장학생 모집
+      - 의과대학 장학생 선발
+      - 의학과 장학금 모집
+      - 공중보건장학생
+      - 보건장학회 장학생
+
+  # 4. 일반 게시판(RSS가 없는 곳) 예시. enabled: true 로 바꾸고 주소를 채워서 쓴다.
+  #    link_pattern 은 게시글 링크 주소에 공통으로 들어가는 부분(정규식).
+  #    그누보드: "wr_id=\\d+" / 대학 K2Web: "artclView\\.do" / 워드프레스는 주소 끝에 /feed/ 를 붙여 rss로.
+  - name: (예시) 그누보드 장학재단 게시판
+    type: html_list
+    enabled: false
+    url: https://example.org/bbs/board.php?bo_table=notice
+    link_pattern: "wr_id=\\d+"
